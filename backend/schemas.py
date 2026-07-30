@@ -79,3 +79,39 @@ class Trip(TripBase):
 
     id: int
     vehicles: List[Vehicle] = []
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class UserBase(BaseModel):
+    username: str
+    display_name: str = ""
+    is_admin: bool = False
+
+
+class UserCreate(UserBase):
+    password: str
+
+
+class User(UserBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+
+
+class AuditLog(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    timestamp: str
+    username: str
+    action: str
+    entity_type: str
+    entity_id: int
+    entity_label: str
+    field: str
+    old_value: str
+    new_value: str

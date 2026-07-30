@@ -2,6 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { api } from "./api";
 import TripCard from "./components/TripCard";
 import PrintSheet from "./components/PrintSheet";
+import Login from "./components/Login";
+import UserManagement from "./components/UserManagement";
+import AuditLog from "./components/AuditLog";
 
 function matchesSearch(vehicle, term) {
   const haystack = `${vehicle.ref} ${vehicle.consignee} ${vehicle.model} ${vehicle.reg} ${vehicle.notes}`.toLowerCase();
@@ -9,19 +12,30 @@ function matchesSearch(vehicle, term) {
 }
 
 function App() {
+  const [user, setUser] = useState(undefined);
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [printingTripId, setPrintingTripId] = useState(null);
+  const [showUsers, setShowUsers] = useState(false);
+  const [showAudit, setShowAudit] = useState(false);
 
   useEffect(() => {
+    api
+      .getMe()
+      .then(setUser)
+      .catch(() => setUser(null));
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
     api
       .getTrips()
       .then(setTrips)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     function handleAfterPrint() {
@@ -36,6 +50,12 @@ function App() {
     const timer = setTimeout(() => window.print(), 50);
     return () => clearTimeout(timer);
   }, [printingTripId]);
+
+  async function handleLogout() {
+    await api.logout();
+    setUser(null);
+    setTrips([]);
+  }
 
   async function handleAddTrip() {
     const trip = await api.createTrip({ booking_ref: "Yeni Sevkiyat" });
@@ -85,6 +105,13 @@ function App() {
 
   const printTrip = trips.find((t) => t.id === printingTripId) ?? null;
 
+  if (user === undefined) {
+    return <div className="flex min-h-screen items-center justify-center text-slate-500">Yukleniyor...</div>;
+  }
+  if (user === null) {
+    return <Login onLogin={setUser} />;
+  }
+
   return (
     <div className="app-shell min-h-screen bg-slate-50 py-8">
       <div className="mx-auto max-w-5xl px-4">
@@ -106,6 +133,26 @@ function App() {
               className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
             >
               + Yeni Sevkiyat
+            </button>
+          </div>
+        </div>
+
+        <div className="no-print mt-3 flex flex-wrap items-center justify-between gap-2 text-sm text-slate-500">
+          <span>
+            Merhaba, <strong className="text-slate-700">{user.display_name || user.username}</strong>
+            {user.is_admin ? " (admin)" : ""}
+          </span>
+          <div className="flex items-center gap-3">
+            <button onClick={() => setShowAudit(true)} className="hover:text-slate-700 hover:underline">
+              Degisiklik Gecmisi
+            </button>
+            {user.is_admin && (
+              <button onClick={() => setShowUsers(true)} className="hover:text-slate-700 hover:underline">
+                Kullanicilar
+              </button>
+            )}
+            <button onClick={handleLogout} className="hover:text-slate-700 hover:underline">
+              Cikis
             </button>
           </div>
         </div>
@@ -133,6 +180,8 @@ function App() {
       </div>
 
       <PrintSheet trip={printTrip} />
+      {showUsers && <UserManagement onClose={() => setShowUsers(false)} />}
+      {showAudit && <AuditLog onClose={() => setShowAudit(false)} />}
     </div>
   );
 }

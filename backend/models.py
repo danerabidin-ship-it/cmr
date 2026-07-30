@@ -1,7 +1,13 @@
+from datetime import datetime
+
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from database import Base
+
+
+def now_iso() -> str:
+    return datetime.utcnow().isoformat()
 
 
 class Trip(Base):
@@ -50,3 +56,37 @@ class Vehicle(Base):
     notes = Column(Text, default="")
 
     trip = relationship("Trip", back_populates="vehicles")
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, nullable=False, index=True)
+    display_name = Column(String, default="")
+    password_hash = Column(String, nullable=False)
+    is_admin = Column(Boolean, default=False)
+    created_at = Column(String, default=now_iso)
+
+
+class Session(Base):
+    __tablename__ = "sessions"
+
+    token = Column(String, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(String, default=now_iso)
+
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    timestamp = Column(String, default=now_iso)
+    username = Column(String, default="")
+    action = Column(String)
+    entity_type = Column(String)
+    entity_id = Column(Integer)
+    entity_label = Column(String, default="")
+    field = Column(String, default="")
+    old_value = Column(Text, default="")
+    new_value = Column(Text, default="")

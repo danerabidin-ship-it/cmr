@@ -52,6 +52,18 @@ function TripCard({ trip, onUpdateTrip, onDeleteTrip, onAddVehicle, onUpdateVehi
           <button onClick={() => onPrint(trip.id)} className="rounded border border-slate-300 px-2 py-1 hover:bg-slate-50">
             Yazdir
           </button>
+          <a
+            href={`/api/trips/${trip.id}/export.xlsx`}
+            className="rounded border border-slate-300 px-2 py-1 hover:bg-slate-50"
+          >
+            Excel
+          </a>
+          <a
+            href={`/api/trips/${trip.id}/export.pdf`}
+            className="rounded border border-slate-300 px-2 py-1 hover:bg-slate-50"
+          >
+            PDF
+          </a>
           <button
             onClick={() => onDeleteTrip(trip.id)}
             className="rounded border border-red-200 px-2 py-1 text-red-600 hover:bg-red-50"
